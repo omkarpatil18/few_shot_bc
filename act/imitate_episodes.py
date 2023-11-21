@@ -50,6 +50,7 @@ def main(args):
     num_epochs = args["num_epochs"]
     add_task_ind = args["add_task_ind"]
     ckpt_dir = args["ckpt_dir"]
+    ckpt_names = args["ckpt_names"]
 
     # get task parameters
     is_sim = task_name[:4] == "sim_"
@@ -112,7 +113,9 @@ def main(args):
         "rlbench_env": rlbench_env,
     }
     if is_eval:
-        ckpt_names = [f"policy_best.ckpt"]
+        if len(ckpt_names) == 0:
+            ckpt_names = [f"policy_best.ckpt"]
+        print(f"Evaluating for {ckpt_names}")
         results = []
         for ckpt_name in ckpt_names:
             task_perfs = eval_bc(
@@ -558,6 +561,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--temporal_agg", action="store_true")
     parser.add_argument("--add_task_ind", action="store_true")
+    parser.add_argument("--ckpt_names", action="store", nargs="*", help="ckpt_names")
 
     main(vars(parser.parse_args()))
 

@@ -70,9 +70,10 @@ class DETRVAE(nn.Module):
                 backbones[0].num_channels, hidden_dim, kernel_size=1
             )
             self.backbones = nn.ModuleList(backbones)
-            self.input_proj_robot_state = nn.Linear(
-                state_dim - 1, hidden_dim
-            )  # removing gripper state from decoder qpos
+            self.input_proj_robot_state = nn.Linear(state_dim, hidden_dim)
+            # self.input_proj_robot_state = nn.Linear(
+            #     state_dim - 1, hidden_dim
+            # )  # removing gripper state from decoder qpos
         else:
             # input_dim = state_dim + 7  # robot_state + env_state
             self.input_proj_robot_state = nn.Linear(state_dim, hidden_dim)
@@ -171,9 +172,10 @@ class DETRVAE(nn.Module):
                 all_cam_features.append(self.input_proj(features))
                 all_cam_pos.append(pos)
             # proprioception features
-            proprio_input = self.input_proj_robot_state(
-                qpos[:, :-1]
-            )  # removing gripper state from the decoder
+            proprio_input = self.input_proj_robot_state(qpos)
+            # proprio_input = self.input_proj_robot_state(
+            #     qpos[:, :-1]
+            # )  # removing gripper state from the decoder
             # fold camera dimension into width dimension
             src = torch.cat(all_cam_features, axis=3)
             pos = torch.cat(all_cam_pos, axis=3)
