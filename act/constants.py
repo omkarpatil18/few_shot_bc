@@ -1,5 +1,12 @@
 import pathlib
-from rlbench.tasks import OpenDoor, OpenBox, CloseBox, CloseDoor
+from rlbench.tasks import (
+    OpenDoor,
+    OpenBox,
+    CloseBox,
+    CloseDoor,
+    ToiletSeatDown,
+    ToiletSeatUp,
+)
 
 ### Task parameters
 DATA_DIR = "/home/local/ASUAD/opatil3/datasets/"
@@ -73,6 +80,42 @@ SIM_TASK_CONFIGS = {
         "dataset_dir": DATA_DIR + "/sim_open_close",
         "num_episodes": 200,
         "episode_len": 500,
+        "camera_names": [
+            "front_rgb",
+            "left_shoulder_rgb",
+            "right_shoulder_rgb",
+            "wrist_rgb",
+        ],
+    },
+    "sim_toilet_seat": {
+        "rlbench_env": [ToiletSeatUp, ToiletSeatDown],
+        "dataset_dir": DATA_DIR + "/sim_open_close",
+        "num_episodes": 200,
+        "episode_len": 250,
+        "camera_names": [
+            "front_rgb",
+            "left_shoulder_rgb",
+            "right_shoulder_rgb",
+            "wrist_rgb",
+        ],
+    },
+    "sim_toilet_seat_up": {
+        "rlbench_env": [ToiletSeatUp],
+        "dataset_dir": DATA_DIR + "/sim_open_close",
+        "num_episodes": 100,
+        "episode_len": 250,
+        "camera_names": [
+            "front_rgb",
+            "left_shoulder_rgb",
+            "right_shoulder_rgb",
+            "wrist_rgb",
+        ],
+    },
+    "sim_toilet_seat_down": {
+        "rlbench_env": [ToiletSeatDown],
+        "dataset_dir": DATA_DIR + "/sim_open_close",
+        "num_episodes": 100,
+        "episode_len": 250,
         "camera_names": [
             "front_rgb",
             "left_shoulder_rgb",

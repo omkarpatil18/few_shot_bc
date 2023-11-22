@@ -54,6 +54,9 @@ class ReverseTrajDataset(Dataset):
         "door_open": re.compile(r"forward_[\d]*2.pickle"),
         "door_close": re.compile(r"backward_[\d]*2.pickle"),
         "door": re.compile(r"[a-zA-Z_]*[\d]*2.pickle"),
+        "toilet_seat_up": re.compile(r"forward_[\d]*3.pickle"),
+        "toilet_seat_down": re.compile(r"backward_[\d]*3.pickle"),
+        "toilet_seat": re.compile(r"[a-zA-Z_]*[\d]*3.pickle"),
     }
     # This order needs to be consistent with what you pass while training
     camera_names = [
