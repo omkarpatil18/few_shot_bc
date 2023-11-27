@@ -13,9 +13,9 @@
             "justMyCode": true,
             "args": [
                 "--task_name",
-                "sim_toilet_seat",
+                "sim_bo_bc_tc",
                 "--ckpt_dir",
-                "/home/local/ASUAD/opatil3/checkpoints/act/act_toilet_seat_trainable_emb",
+                "/home/local/ASUAD/opatil3/checkpoints/act/act_bo_bc_tc",
                 "--policy_class",
                 "ACT",
                 "--kl_weight",
@@ -46,9 +46,9 @@
             "justMyCode": true,
             "args": [
                 "--task_name",
-                "sim_box",
+                "sim_bo_bc_tc",
                 "--ckpt_dir",
-                "/home/local/ASUAD/opatil3/checkpoints/act/act_box_trainable_emb",
+                "/home/local/ASUAD/opatil3/checkpoints/act/act_bo_bc_tc",
                 "--policy_class",
                 "ACT",
                 "--kl_weight",

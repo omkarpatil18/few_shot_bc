@@ -62,7 +62,7 @@ class ReverseTrajDataset(Dataset):
         ),
     }
 
-    # Task specific skill mapping
+    # Env specific skill mapping
     skill_map = {
         "box": {"forward": "open", "backward": "close"},
         "door": {"forward": "open", "backward": "close"},
@@ -161,22 +161,29 @@ class ReverseTrajDataset(Dataset):
             data_batch["is_pad"] = torch.from_numpy(is_pad).bool()
             if self.add_task_ind:
                 if "backward" in self.file_list[index]:
-                    task_ind = torch.tensor([0.0, 1.0], dtype=torch.float32)
+                    skill_ind = torch.tensor([0.0, 1.0], dtype=torch.float32)
                 elif "forward" in self.file_list[index]:
-                    task_ind = torch.tensor([1.0, 0.0], dtype=torch.float32)
+                    skill_ind = torch.tensor([1.0, 0.0], dtype=torch.float32)
+
+                if self.file_list[index].replace(".pickle", "")[-1] == "1":  # box
+                    env_ind = torch.tensor([0.0, 1.0], dtype=torch.float32)
+                elif (
+                    self.file_list[index].replace(".pickle", "")[-1] == "3"
+                ):  # toilet seat
+                    env_ind = torch.tensor([1.0, 0.0], dtype=torch.float32)
             else:
-                task_ind = torch.tensor([0, 0], dtype=torch.float32)
-            data_batch["task_ind"] = task_ind.squeeze()
+                skill_ind = torch.tensor([0, 0], dtype=torch.float32)
+                env_ind = torch.tensor([0, 0], dtype=torch.float32)
+
+            data_batch["skill_ind"] = skill_ind.squeeze()
+            data_batch["env_ind"] = env_ind.squeeze()
 
         assert data_batch["images"].shape == torch.Size([4, 3, 128, 128])
         assert data_batch["is_pad"].shape == torch.Size([self.chunk_size])
         assert data_batch["joint_action"].shape == torch.Size([self.chunk_size, 7])
         assert data_batch["gripper_action"].shape == torch.Size([self.chunk_size])
-        assert data_batch["task_ind"].shape == torch.Size(
-            [
-                2,
-            ]
-        )
+        assert data_batch["skill_ind"].shape == torch.Size([2])
+        assert data_batch["env_ind"].shape == torch.Size([2])
 
         return data_batch
 

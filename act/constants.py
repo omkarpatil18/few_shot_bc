@@ -123,4 +123,16 @@ SIM_TASK_CONFIGS = {
             "wrist_rgb",
         ],
     },
+    "sim_bo_bc_tc": {
+        "rlbench_env": [OpenBox, CloseBox, ToiletSeatUp, ToiletSeatDown],
+        "dataset_dir": DATA_DIR + "/sim_open_close",
+        "num_episodes": 100,
+        "episode_len": 250,
+        "camera_names": [
+            "front_rgb",
+            "left_shoulder_rgb",
+            "right_shoulder_rgb",
+            "wrist_rgb",
+        ],
+    },
 }

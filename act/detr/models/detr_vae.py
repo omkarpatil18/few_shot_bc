@@ -53,7 +53,8 @@ class DETRVAE(nn.Module):
             num_queries: number of object queries, ie detection slot. This is the maximal number of objects
                          DETR can detect in a single image. For COCO, we recommend 100 queries.
             aux_loss: True if auxiliary decoding losses (loss at each decoder layer) are to be used.
-            task_ind: Use the provided task indicator (from data_gen) in the model
+            skill_ind: Use the provided skill indicator (from data_gen) in the model (forward/backward)
+            env_ind: Env indicator (ex box/toilet)
         """
         super().__init__()
         self.num_queries = num_queries
@@ -102,10 +103,11 @@ class DETRVAE(nn.Module):
             self.latent_dim, hidden_dim
         )  # project latent sample to embedding
         self.skill_embed = nn.Embedding(2, hidden_dim)  # learned skill embedding
+        self.env_embed = nn.Embedding(2, hidden_dim)  # learned env embedding
 
         self.additional_pos_embed = nn.Embedding(
-            3, hidden_dim
-        )  # learned position embedding for proprio, latent and skill
+            4, hidden_dim
+        )  # learned position embedding for proprio, latent and skill, env
 
     def forward(self, qpos, image, env_state, actions=None, is_pad=None, **kwargs):
         """
@@ -114,9 +116,10 @@ class DETRVAE(nn.Module):
         env_state: None
         actions: batch, seq, action_dim
         """
-        task_ind = kwargs[
-            "task_ind"
+        skill_ind = kwargs[
+            "skill_ind"
         ]  # influence the latent vector for forward/backward traj
+        env_ind = kwargs["env_ind"]  # Environment indicator
         is_training = actions is not None  # train or val
         bs, _ = qpos.shape
         ### Obtain latent z from action sequence
@@ -165,8 +168,13 @@ class DETRVAE(nn.Module):
 
         # TODO: condition on the skill
         skill_input = torch.bmm(
-            task_ind.unsqueeze(1),
-            self.skill_embed.weight.unsqueeze(0).expand(task_ind.shape[0], -1, -1),
+            skill_ind.unsqueeze(1),
+            self.skill_embed.weight.unsqueeze(0).expand(skill_ind.shape[0], -1, -1),
+        ).squeeze(1)
+
+        env_input = torch.bmm(
+            env_ind.unsqueeze(1),
+            self.env_embed.weight.unsqueeze(0).expand(env_ind.shape[0], -1, -1),
         ).squeeze(1)
 
         if self.backbones is not None:
@@ -195,6 +203,7 @@ class DETRVAE(nn.Module):
                 latent_input,
                 proprio_input,
                 skill_input,
+                env_input,
                 self.additional_pos_embed.weight,
             )[0]
         else:

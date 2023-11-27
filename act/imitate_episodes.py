@@ -1,3 +1,4 @@
+import sys
 import torch
 import numpy as np
 import os
@@ -8,8 +9,6 @@ from copy import deepcopy
 from tqdm import tqdm
 from einops import rearrange
 import datetime
-import clip
-
 from utils import (
     compute_dict_mean,
     set_seed,
@@ -17,19 +16,22 @@ from utils import (
     save_videos,
 )  # helper functions
 from policy import ACTPolicy, CNNMLPPolicy
-
-import sys
-
-sys.path.append("act/act/")
-
 from rl_bench.torch_data import load_data as load_rlbench_data, ReverseTrajDataset
-
+from rlbench.tasks import (
+    OpenDoor,
+    OpenBox,
+    CloseBox,
+    CloseDoor,
+    ToiletSeatDown,
+    ToiletSeatUp,
+)
 from rlbench.action_modes.action_mode import MoveArmThenGripper
 from rlbench.action_modes.arm_action_modes import JointVelocity, JointPosition
 from rlbench.action_modes.gripper_action_modes import Discrete
 from rlbench.environment import Environment
 from rlbench.observation_config import ObservationConfig
 
+sys.path.append("act/act/")
 FRANKA_JOINT_LIMITS = np.asarray(
     [
         [-2.8973, -1.7628, -2.8973, -3.0718, -2.8973, -0.0175, -2.8973],
@@ -37,6 +39,8 @@ FRANKA_JOINT_LIMITS = np.asarray(
     ],
     dtype=np.float32,
 ).T
+FORWARD_ENVS = {OpenDoor, OpenBox, ToiletSeatUp}
+BACKWARD_ENVS = {CloseBox, CloseDoor, ToiletSeatDown}
 
 
 def main(args):
@@ -278,19 +282,26 @@ def eval_bc(config, ckpt_name, save_episode=True, **kwargs):
             qpos_list = []
             target_qpos_list = []
             rewards = []
-            task_ind = torch.tensor([[0, 0]], dtype=torch.float32)
+            skill_ind = torch.tensor([[0, 0]], dtype=torch.float32)
+            env_ind = torch.tensor([[0, 0]], dtype=torch.float32)
             if add_task_ind:
-                if "close" in rlenv.__name__.lower():
-                    task_ind = torch.tensor([[0.0, 1.0]], dtype=torch.float32)
-                elif "open" in rlenv.__name__.lower():
-                    task_ind = torch.tensor([[1.0, 0.0]], dtype=torch.float32)
-            task_ind = task_ind.cuda()
+                if rlenv in BACKWARD_ENVS:
+                    skill_ind = torch.tensor([[0.0, 1.0]], dtype=torch.float32)
+                elif rlenv in FORWARD_ENVS:
+                    skill_ind = torch.tensor([[1.0, 0.0]], dtype=torch.float32)
+
+                if "box" in rlenv.__name__:
+                    env_ind = torch.tensor([0.0, 1.0], dtype=torch.float32)
+                elif "toilet" in rlenv.__name__:
+                    env_ind = torch.tensor([1.0, 0.0], dtype=torch.float32)
+            skill_ind = skill_ind.cuda()
+            env_ind = env_ind.cuda()
 
             with torch.inference_mode():
                 for t in range(max_timesteps):
-                    t_task_ind = task_ind
-                    # if t >= 250:  # change sign of task_ind for the reverse task
-                    #     t_task_ind = task_ind * -1
+                    t_skill_ind = skill_ind
+                    # if t >= 250:  # change sign of skill_ind for the reverse task
+                    #     t_task_ind = skill_ind * -1
                     joint_position = pre_process(obs.joint_positions)
                     qpos_numpy = np.array(np.hstack([joint_position, obs.gripper_open]))
                     qpos = torch.from_numpy(qpos_numpy).float().cuda().unsqueeze(0)
@@ -301,7 +312,9 @@ def eval_bc(config, ckpt_name, save_episode=True, **kwargs):
                     ### query policy
                     if config["policy_class"] == "ACT":
                         if t % query_frequency == 0:
-                            all_actions = policy(qpos, curr_image, task_ind=t_task_ind)
+                            all_actions = policy(
+                                qpos, curr_image, skill_ind=t_skill_ind, env_ind=env_ind
+                            )
                         if temporal_agg:
                             all_time_actions[[t], t : t + num_queries] = all_actions
                             actions_for_curr_step = all_time_actions[:, t]
@@ -388,7 +401,8 @@ def forward_pass(data, policy):
     joint_action = data["joint_action"]
     is_pad = data["is_pad"]
     gripper_action = data["gripper_action"]
-    task_ind = data["task_ind"]
+    skill_ind = data["skill_ind"]
+    env_ind = data["env_ind"]
 
     # Append gripper action to joint action
     action = torch.concatenate((joint_action, gripper_action.unsqueeze(-1)), 2)
@@ -396,15 +410,21 @@ def forward_pass(data, policy):
     # Get the current joint state
     qpos = action[:, 0, :]
 
-    images, qpos, action, is_pad, task_ind = (
+    images, qpos, action, is_pad, skill_ind, env_ind = (
         images.cuda(),
         qpos.cuda(),
         action.cuda(),
         is_pad.cuda(),
-        task_ind.cuda(),
+        skill_ind.cuda(),
+        env_ind.cuda(),
     )
     return policy(
-        qpos, images, actions=action, is_pad=is_pad, task_ind=task_ind
+        qpos,
+        images,
+        actions=action,
+        is_pad=is_pad,
+        skill_ind=skill_ind,
+        env_ind=env_ind,
     )  # TODO remove None
 
 
