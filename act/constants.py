@@ -6,6 +6,8 @@ from rlbench.tasks import (
     CloseDoor,
     ToiletSeatDown,
     ToiletSeatUp,
+    OpenGrill,
+    CloseGrill,
 )
 
 ### Task parameters
@@ -125,6 +127,66 @@ SIM_TASK_CONFIGS = {
     },
     "sim_bo_bc_tc": {
         "rlbench_env": [OpenBox, CloseBox, ToiletSeatUp, ToiletSeatDown],
+        "dataset_dir": DATA_DIR + "/sim_open_close",
+        "num_episodes": 100,
+        "episode_len": 250,
+        "camera_names": [
+            "front_rgb",
+            "left_shoulder_rgb",
+            "right_shoulder_rgb",
+            "wrist_rgb",
+        ],
+    },
+    "sim_bo_bc_go_gc_tc": {
+        # "rlbench_env": [
+        #     OpenBox,
+        #     CloseBox,
+        #     ToiletSeatUp,
+        #     ToiletSeatDown,
+        #     CloseGrill,
+        #     OpenGrill,
+        # ],
+        "rlbench_env": [ToiletSeatUp],
+        "dataset_dir": DATA_DIR + "/sim_open_close",
+        "num_episodes": 100,
+        "episode_len": 250,
+        "camera_names": [
+            "front_rgb",
+            "left_shoulder_rgb",
+            "right_shoulder_rgb",
+            "wrist_rgb",
+        ],
+    },
+    "sim_go_gc_to_tc_bc": {
+        # "rlbench_env": [
+        #     OpenBox,
+        #     CloseBox,
+        #     ToiletSeatUp,
+        #     ToiletSeatDown,
+        #     CloseGrill,
+        #     OpenGrill,
+        # ],
+        "rlbench_env": [OpenBox],
+        "dataset_dir": DATA_DIR + "/sim_open_close",
+        "num_episodes": 100,
+        "episode_len": 250,
+        "camera_names": [
+            "front_rgb",
+            "left_shoulder_rgb",
+            "right_shoulder_rgb",
+            "wrist_rgb",
+        ],
+    },
+    "sim_go_gc_to_tc_bo": {
+        # "rlbench_env": [
+        #     OpenBox,
+        #     CloseBox,
+        #     ToiletSeatUp,
+        #     ToiletSeatDown,
+        #     CloseGrill,
+        #     OpenGrill,
+        # ],
+        "rlbench_env": [CloseBox],
         "dataset_dir": DATA_DIR + "/sim_open_close",
         "num_episodes": 100,
         "episode_len": 250,

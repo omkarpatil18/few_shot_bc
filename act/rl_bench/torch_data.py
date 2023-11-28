@@ -60,6 +60,21 @@ class ReverseTrajDataset(Dataset):
         "bo_bc_tc": re.compile(
             r"[a-zA-Z_]*[\d]*[1].pickle|demo_backward_[\d]*[3].pickle"
         ),
+        "grill_open": re.compile(r"forward_[\d]*5.pickle"),
+        "grill_close": re.compile(r"backward_[\d]*5.pickle"),
+        "grill": re.compile(r"[a-zA-Z_]*[\d]*5.pickle"),
+        "bo_bc_go_gc_tc": re.compile(
+            r"[a-zA-Z_]*[\d]*[1].pickle|[a-zA-Z_]*[\d]*[5].pickle|demo_backward_[\d]*[3].pickle"
+        ),
+        "go_gc_to_tc_bc": re.compile(
+            r"[a-zA-Z_]*[\d]*[5].pickle|[a-zA-Z_]*[\d]*[3].pickle|demo_backward_[\d]*[1].pickle"
+        ),
+        "go_gc_to_tc_bo": re.compile(
+            r"[a-zA-Z_]*[\d]*[5].pickle|[a-zA-Z_]*[\d]*[3].pickle|demo_forward_[\d]*[1].pickle"
+        ),
+        # "bo_bc_go_gc_tc": re.compile(r"demo_forward_[\d]*[3].pickle"),
+        # "go_gc_to_tc_bc": re.compile(r"demo_forward_[\d]*[1].pickle"),
+        # "go_gc_to_tc_bo": re.compile(r"demo_backward_[\d]*[1].pickle"),
     }
 
     # Env specific skill mapping
@@ -67,6 +82,7 @@ class ReverseTrajDataset(Dataset):
         "box": {"forward": "open", "backward": "close"},
         "door": {"forward": "open", "backward": "close"},
         "toilet_seat": {"forward": "open", "backward": "close"},
+        "grill": {"forward": "open", "backward": "close"},
     }
 
     # This order needs to be consistent with what you pass while training
@@ -165,15 +181,15 @@ class ReverseTrajDataset(Dataset):
                 elif "forward" in self.file_list[index]:
                     skill_ind = torch.tensor([1.0, 0.0], dtype=torch.float32)
 
-                if self.file_list[index].replace(".pickle", "")[-1] == "1":  # box
-                    env_ind = torch.tensor([0.0, 1.0], dtype=torch.float32)
-                elif (
-                    self.file_list[index].replace(".pickle", "")[-1] == "3"
-                ):  # toilet seat
-                    env_ind = torch.tensor([1.0, 0.0], dtype=torch.float32)
+            if self.file_list[index].replace(".pickle", "")[-1] == "1":  # box
+                env_ind = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float32)
+            elif self.file_list[index].replace(".pickle", "")[-1] == "3":  # toilet seat
+                env_ind = torch.tensor([0.0, 1.0, 0.0], dtype=torch.float32)
+            elif self.file_list[index].replace(".pickle", "")[-1] == "5":  # toilet seat
+                env_ind = torch.tensor([0.0, 0.0, 1.0], dtype=torch.float32)
             else:
                 skill_ind = torch.tensor([0, 0], dtype=torch.float32)
-                env_ind = torch.tensor([0, 0], dtype=torch.float32)
+                env_ind = torch.tensor([0, 0, 0], dtype=torch.float32)
 
             data_batch["skill_ind"] = skill_ind.squeeze()
             data_batch["env_ind"] = env_ind.squeeze()
@@ -183,7 +199,7 @@ class ReverseTrajDataset(Dataset):
         assert data_batch["joint_action"].shape == torch.Size([self.chunk_size, 7])
         assert data_batch["gripper_action"].shape == torch.Size([self.chunk_size])
         assert data_batch["skill_ind"].shape == torch.Size([2])
-        assert data_batch["env_ind"].shape == torch.Size([2])
+        # assert data_batch["env_ind"].shape == torch.Size([2])
 
         return data_batch
 
@@ -257,7 +273,8 @@ def load_data(
             if task_filter_key.search(file):
                 file_list.append(file)
     random.shuffle(file_list)
-
+    # TODO: Split based on task
+    # file_list = file_list[:13] # For few-shot
     split_idx = int(len(file_list) * train_split)
     # print("Sampling train dataset from a beta distribution: 1.5, 1.5")
     train_dataset = ReverseTrajDataset(

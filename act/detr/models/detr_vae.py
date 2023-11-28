@@ -103,7 +103,7 @@ class DETRVAE(nn.Module):
             self.latent_dim, hidden_dim
         )  # project latent sample to embedding
         self.skill_embed = nn.Embedding(2, hidden_dim)  # learned skill embedding
-        self.env_embed = nn.Embedding(2, hidden_dim)  # learned env embedding
+        self.env_embed = nn.Embedding(3, hidden_dim)  # learned env embedding
 
         self.additional_pos_embed = nn.Embedding(
             4, hidden_dim

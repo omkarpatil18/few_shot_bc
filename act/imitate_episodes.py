@@ -24,6 +24,8 @@ from rlbench.tasks import (
     CloseDoor,
     ToiletSeatDown,
     ToiletSeatUp,
+    OpenGrill,
+    CloseGrill,
 )
 from rlbench.action_modes.action_mode import MoveArmThenGripper
 from rlbench.action_modes.arm_action_modes import JointVelocity, JointPosition
@@ -39,8 +41,8 @@ FRANKA_JOINT_LIMITS = np.asarray(
     ],
     dtype=np.float32,
 ).T
-FORWARD_ENVS = {OpenDoor, OpenBox, ToiletSeatUp}
-BACKWARD_ENVS = {CloseBox, CloseDoor, ToiletSeatDown}
+FORWARD_ENVS = {OpenDoor, OpenBox, ToiletSeatUp, OpenGrill}
+BACKWARD_ENVS = {CloseBox, CloseDoor, ToiletSeatDown, CloseGrill}
 
 
 def main(args):
@@ -115,6 +117,7 @@ def main(args):
         "camera_names": camera_names,
         "real_robot": not is_sim,
         "rlbench_env": rlbench_env,
+        "ckpt_names": ckpt_names if ckpt_names else [],
     }
     if is_eval:
         print(f"Evaluating for {ckpt_names}")
@@ -290,10 +293,18 @@ def eval_bc(config, ckpt_name, save_episode=True, **kwargs):
                 elif rlenv in FORWARD_ENVS:
                     skill_ind = torch.tensor([[1.0, 0.0]], dtype=torch.float32)
 
-                if "box" in rlenv.__name__:
-                    env_ind = torch.tensor([0.0, 1.0], dtype=torch.float32)
-                elif "toilet" in rlenv.__name__:
-                    env_ind = torch.tensor([1.0, 0.0], dtype=torch.float32)
+                if "box" in rlenv.__name__.lower():
+                    env_ind = torch.tensor([[1.0, 0.0, 0.0]], dtype=torch.float32)
+                elif "toilet" in rlenv.__name__.lower():
+                    env_ind = torch.tensor([[0.0, 1.0, 0.0]], dtype=torch.float32)
+                elif "grill" in rlenv.__name__.lower():
+                    env_ind = torch.tensor([[0.0, 0.0, 1.0]], dtype=torch.float32)
+
+                # if "box" in rlenv.__name__.lower():
+                #     env_ind = torch.tensor([[0.0, 1.0]], dtype=torch.float32)
+                # elif "toilet" in rlenv.__name__.lower():
+                #     env_ind = torch.tensor([[1.0, 0.0]], dtype=torch.float32)
+
             skill_ind = skill_ind.cuda()
             env_ind = env_ind.cuda()
 
@@ -434,13 +445,22 @@ def train_bc(train_dataloader, val_dataloader, config):
     seed = config["seed"]
     policy_class = config["policy_class"]
     policy_config = config["policy_config"]
+    ckpt_names = config.get("ckpt_names", [])
 
     set_seed(seed)
-
     policy = make_policy(policy_class, policy_config)
-    policy.cuda()
     optimizer = make_optimizer(policy_class, policy)
 
+    if len(ckpt_names) > 0:
+        # load policy and stats
+        ckpt_path = os.path.join(ckpt_names[0])
+        loading_status = policy.load_state_dict(torch.load(ckpt_path))
+        print(loading_status)
+        print(f"******** Loaded model: {ckpt_path} ********")
+    else:
+        print("******** Training the model from scratch ********")
+
+    policy.cuda()
     train_history = []
     validation_history = []
     min_val_loss = np.inf
