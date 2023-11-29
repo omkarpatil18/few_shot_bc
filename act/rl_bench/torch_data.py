@@ -57,24 +57,25 @@ class ReverseTrajDataset(Dataset):
         "toilet_seat_up": re.compile(r"forward_[\d]*3.pickle"),
         "toilet_seat_down": re.compile(r"backward_[\d]*3.pickle"),
         "toilet_seat": re.compile(r"[a-zA-Z_]*[\d]*3.pickle"),
-        "bo_bc_tc": re.compile(
-            r"[a-zA-Z_]*[\d]*[1].pickle|demo_backward_[\d]*[3].pickle"
-        ),
+        # "bo_bc_tc": re.compile(
+        #     r"[a-zA-Z_]*[\d]*[1].pickle|demo_backward_[\d]*[3].pickle"
+        # ),
+        "bo_bc_tc": re.compile(r"demo_forward_[\d]*[3].pickle"),
         "grill_open": re.compile(r"forward_[\d]*5.pickle"),
         "grill_close": re.compile(r"backward_[\d]*5.pickle"),
         "grill": re.compile(r"[a-zA-Z_]*[\d]*5.pickle"),
-        "bo_bc_go_gc_tc": re.compile(
-            r"[a-zA-Z_]*[\d]*[1].pickle|[a-zA-Z_]*[\d]*[5].pickle|demo_backward_[\d]*[3].pickle"
-        ),
-        "go_gc_to_tc_bc": re.compile(
-            r"[a-zA-Z_]*[\d]*[5].pickle|[a-zA-Z_]*[\d]*[3].pickle|demo_backward_[\d]*[1].pickle"
-        ),
-        "go_gc_to_tc_bo": re.compile(
-            r"[a-zA-Z_]*[\d]*[5].pickle|[a-zA-Z_]*[\d]*[3].pickle|demo_forward_[\d]*[1].pickle"
-        ),
-        # "bo_bc_go_gc_tc": re.compile(r"demo_forward_[\d]*[3].pickle"),
-        # "go_gc_to_tc_bc": re.compile(r"demo_forward_[\d]*[1].pickle"),
-        # "go_gc_to_tc_bo": re.compile(r"demo_backward_[\d]*[1].pickle"),
+        # "bo_bc_go_gc_tc": re.compile(
+        #     r"[a-zA-Z_]*[\d]*[1].pickle|[a-zA-Z_]*[\d]*[5].pickle|demo_backward_[\d]*[3].pickle"
+        # ),
+        # "go_gc_to_tc_bc": re.compile(
+        #     r"[a-zA-Z_]*[\d]*[5].pickle|[a-zA-Z_]*[\d]*[3].pickle|demo_backward_[\d]*[1].pickle"
+        # ),
+        # "go_gc_to_tc_bo": re.compile(
+        #     r"[a-zA-Z_]*[\d]*[5].pickle|[a-zA-Z_]*[\d]*[3].pickle|demo_forward_[\d]*[1].pickle"
+        # ),
+        "bo_bc_go_gc_tc": re.compile(r"demo_forward_[\d]*[3].pickle"),
+        "go_gc_to_tc_bc": re.compile(r"demo_forward_[\d]*[1].pickle"),
+        "go_gc_to_tc_bo": re.compile(r"demo_backward_[\d]*[1].pickle"),
     }
 
     # Env specific skill mapping
@@ -144,8 +145,8 @@ class ReverseTrajDataset(Dataset):
                         for i, js in enumerate(chunk_data):
                             if self.normalizer.validate_bounds(js):
                                 chunk_data[i] = self.normalizer.transform(js)
-                            else:
-                                chunk_data[i] = self.normalizer.clamp(js)
+                                chunk_data[i] += np.random.normal(0, 0.015, size=(7,))
+                            chunk_data[i] = self.normalizer.clamp(js)
 
                     data = torch.zeros((self.chunk_size, CONFIG_DIM))
                     data[: end_ts - start_ts, :] = torch.as_tensor(np.array(chunk_data))
@@ -274,7 +275,7 @@ def load_data(
                 file_list.append(file)
     random.shuffle(file_list)
     # TODO: Split based on task
-    # file_list = file_list[:13] # For few-shot
+    # file_list = file_list[:13]  # For few-shot
     split_idx = int(len(file_list) * train_split)
     # print("Sampling train dataset from a beta distribution: 1.5, 1.5")
     train_dataset = ReverseTrajDataset(
