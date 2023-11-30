@@ -13,9 +13,9 @@
             "justMyCode": true,
             "args": [
                 "--task_name",
-                "sim_go_gc_to_tc_bc",
+                "sim_go_gc_to_tc_bo",
                 "--ckpt_dir",
-                "/home/local/ASUAD/opatil3/checkpoints/act/act_go_gc_to_tc_bc_finetune_bo_noise",
+                "/home/local/ASUAD/opatil3/checkpoints/act/act_go_gc_to_tc_bo_finetune_bc_noise",
                 "--policy_class",
                 "ACT",
                 "--kl_weight",
@@ -36,7 +36,7 @@
                 "0",
                 "--add_task_ind",
                 "--ckpt_names",
-                "/home/local/ASUAD/opatil3/checkpoints/act/act_go_gc_to_tc_bc/policy_best.ckpt",
+                "/home/local/ASUAD/opatil3/checkpoints/act/act_go_gc_to_tc_bo/policy_best.ckpt",
             ]
         },
         {
@@ -50,7 +50,7 @@
                 "--task_name",
                 "sim_bo_bc_go_gc_tc",
                 "--ckpt_dir",
-                "/home/local/ASUAD/opatil3/checkpoints/act/act_bo_bc_go_gc_tc_finetune_to",
+                "/home/local/ASUAD/opatil3/checkpoints/act/act_bo_bc_go_gc_tc_finetune_to_noise",
                 "--policy_class",
                 "ACT",
                 "--kl_weight",
@@ -74,7 +74,7 @@
                 "policy_epoch_500_seed_0.ckpt",
                 "policy_epoch_1000_seed_0.ckpt",
                 "policy_epoch_1500_seed_0.ckpt",
-                // "policy_best.ckpt",
+                "policy_best.ckpt",
                 "--add_task_ind"
             ]
         }

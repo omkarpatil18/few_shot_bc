@@ -145,7 +145,6 @@ class ReverseTrajDataset(Dataset):
                         for i, js in enumerate(chunk_data):
                             if self.normalizer.validate_bounds(js):
                                 chunk_data[i] = self.normalizer.transform(js)
-                                chunk_data[i] += np.random.normal(0, 0.015, size=(7,))
                             chunk_data[i] = self.normalizer.clamp(js)
 
                     data = torch.zeros((self.chunk_size, CONFIG_DIM))

@@ -420,6 +420,7 @@ def forward_pass(data, policy):
 
     # Get the current joint state
     qpos = action[:, 0, :]
+    # qpos += torch.normal(0, 0.01, size=qpos.shape)
 
     images, qpos, action, is_pad, skill_ind, env_ind = (
         images.cuda(),
