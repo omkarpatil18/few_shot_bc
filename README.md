@@ -1,4 +1,5 @@
-# lang_conditioned_bc
+# few_shot_bc
+![Poster_Group1 pptx (1)](https://github.com/omkarpatil18/few_shot_bc/assets/16060082/5b76d47a-0f5a-4b91-b3a0-faabd5b68584)
 
 ### Repo Structure
 - ``imitate_episodes.py`` Train and Evaluate ACT
