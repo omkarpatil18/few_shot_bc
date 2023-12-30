@@ -57,6 +57,8 @@ def main(args):
     add_task_ind = args["add_task_ind"]
     ckpt_dir = args["ckpt_dir"]
     ckpt_names = args["ckpt_names"]
+    few_shot = args["few_shot"]
+    ent_weight = args["ent_weight"]
 
     # get task parameters
     is_sim = task_name[:4] == "sim_"
@@ -90,6 +92,8 @@ def main(args):
             "nheads": nheads,
             "camera_names": camera_names,
             "state_dim": state_dim,
+            "few_shot": few_shot,
+            "ent_weight": ent_weight,
         }
     elif policy_class == "CNNMLP":
         policy_config = {
@@ -152,6 +156,7 @@ def main(args):
         norm_bound=FRANKA_JOINT_LIMITS,
         batch_size=batch_size,
         add_task_ind=add_task_ind,
+        few_shot=few_shot,
     )
 
     # Save configuration
@@ -602,5 +607,7 @@ if __name__ == "__main__":
     parser.add_argument("--add_task_ind", action="store_true")
 
     parser.add_argument("--ckpt_names", action="store", nargs="*", help="ckpt_names")
+    parser.add_argument("--few_shot", action="store", type=int, help="few_shot")
+    parser.add_argument("--ent_weight", action="store", type=float, help="ent_weight")
 
     main(vars(parser.parse_args()))

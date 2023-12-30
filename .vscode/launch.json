@@ -13,9 +13,11 @@
             "justMyCode": true,
             "args": [
                 "--task_name",
-                "sim_go_gc_to_tc_bo",
+                // "sim_bo_bc_go_gc_tc",
+                "sim_box_close",
                 "--ckpt_dir",
-                "/home/local/ASUAD/opatil3/checkpoints/act/act_go_gc_to_tc_bo_finetune_bc_noise",
+                // "/home/local/ASUAD/opatil3/checkpoints/act/few_shot/actmi_bo_bc_go_gc_tc_w_0.1_fewshot_to_1",
+                "/home/local/ASUAD/opatil3/checkpoints/act/single_task/act_box_close_100",
                 "--policy_class",
                 "ACT",
                 "--kl_weight",
@@ -34,9 +36,13 @@
                 "1e-5",
                 "--seed",
                 "0",
+                "--ent_weight",
+                "0.01",
                 "--add_task_ind",
                 "--ckpt_names",
-                "/home/local/ASUAD/opatil3/checkpoints/act/act_go_gc_to_tc_bo/policy_best.ckpt",
+                "/home/local/ASUAD/opatil3/checkpoints/act/multi_task/actmi_bo_bc_go_gc_tc_w_0.1/policy_best.ckpt",
+                "--few_shot",
+                "1",
             ]
         },
         {
@@ -48,15 +54,17 @@
             "justMyCode": true,
             "args": [
                 "--task_name",
-                "sim_bo_bc_go_gc_tc",
+                // "sim_bo_bc_go_gc_tc",
+                "sim_box_close",
                 "--ckpt_dir",
-                "/home/local/ASUAD/opatil3/checkpoints/act/act_bo_bc_go_gc_tc_finetune_to_noise",
+                // "/home/local/ASUAD/opatil3/checkpoints/act/few_shot/actmi_bo_bc_go_gc_tc_w_0.1_fewshot_to_1",
+                "/home/local/ASUAD/opatil3/checkpoints/act/single_task/act_box_close_100",
                 "--policy_class",
                 "ACT",
                 "--kl_weight",
                 "10",
                 "--chunk_size",
-                "100",
+                "1",
                 "--hidden_dim",
                 "512",
                 "--batch_size",
@@ -71,11 +79,11 @@
                 "0",
                 "--eval",
                 "--ckpt_names",
-                "policy_epoch_500_seed_0.ckpt",
-                "policy_epoch_1000_seed_0.ckpt",
-                "policy_epoch_1500_seed_0.ckpt",
+                // "policy_epoch_500_seed_0.ckpt",
+                // "policy_epoch_1000_seed_0.ckpt",
+                // "policy_epoch_1500_seed_0.ckpt",
                 "policy_best.ckpt",
-                "--add_task_ind"
+                // "--add_task_ind"
             ]
         }
     ]

@@ -47,37 +47,6 @@ class ReverseTrajDataset(Dataset):
     Dataset for robot trajectory for BC.
     """
 
-    task_filter_map = {
-        "box_open": re.compile(r"forward_[\d]*1.pickle"),
-        "box_close": re.compile(r"backward_[\d]*1.pickle"),
-        "box": re.compile(r"[a-zA-Z_]*[\d]*1.pickle"),
-        "door_open": re.compile(r"forward_[\d]*2.pickle"),
-        "door_close": re.compile(r"backward_[\d]*2.pickle"),
-        "door": re.compile(r"[a-zA-Z_]*[\d]*2.pickle"),
-        "toilet_seat_up": re.compile(r"forward_[\d]*3.pickle"),
-        "toilet_seat_down": re.compile(r"backward_[\d]*3.pickle"),
-        "toilet_seat": re.compile(r"[a-zA-Z_]*[\d]*3.pickle"),
-        # "bo_bc_tc": re.compile(
-        #     r"[a-zA-Z_]*[\d]*[1].pickle|demo_backward_[\d]*[3].pickle"
-        # ),
-        "bo_bc_tc": re.compile(r"demo_forward_[\d]*[3].pickle"),
-        "grill_open": re.compile(r"forward_[\d]*5.pickle"),
-        "grill_close": re.compile(r"backward_[\d]*5.pickle"),
-        "grill": re.compile(r"[a-zA-Z_]*[\d]*5.pickle"),
-        # "bo_bc_go_gc_tc": re.compile(
-        #     r"[a-zA-Z_]*[\d]*[1].pickle|[a-zA-Z_]*[\d]*[5].pickle|demo_backward_[\d]*[3].pickle"
-        # ),
-        # "go_gc_to_tc_bc": re.compile(
-        #     r"[a-zA-Z_]*[\d]*[5].pickle|[a-zA-Z_]*[\d]*[3].pickle|demo_backward_[\d]*[1].pickle"
-        # ),
-        # "go_gc_to_tc_bo": re.compile(
-        #     r"[a-zA-Z_]*[\d]*[5].pickle|[a-zA-Z_]*[\d]*[3].pickle|demo_forward_[\d]*[1].pickle"
-        # ),
-        "bo_bc_go_gc_tc": re.compile(r"demo_forward_[\d]*[3].pickle"),
-        "go_gc_to_tc_bc": re.compile(r"demo_forward_[\d]*[1].pickle"),
-        "go_gc_to_tc_bo": re.compile(r"demo_backward_[\d]*[1].pickle"),
-    }
-
     # Env specific skill mapping
     skill_map = {
         "box": {"forward": "open", "backward": "close"},
@@ -185,7 +154,7 @@ class ReverseTrajDataset(Dataset):
                 env_ind = torch.tensor([1.0, 0.0, 0.0], dtype=torch.float32)
             elif self.file_list[index].replace(".pickle", "")[-1] == "3":  # toilet seat
                 env_ind = torch.tensor([0.0, 1.0, 0.0], dtype=torch.float32)
-            elif self.file_list[index].replace(".pickle", "")[-1] == "5":  # toilet seat
+            elif self.file_list[index].replace(".pickle", "")[-1] == "5":  # grill
                 env_ind = torch.tensor([0.0, 0.0, 1.0], dtype=torch.float32)
             else:
                 skill_ind = torch.tensor([0, 0], dtype=torch.float32)
@@ -199,7 +168,7 @@ class ReverseTrajDataset(Dataset):
         assert data_batch["joint_action"].shape == torch.Size([self.chunk_size, 7])
         assert data_batch["gripper_action"].shape == torch.Size([self.chunk_size])
         assert data_batch["skill_ind"].shape == torch.Size([2])
-        # assert data_batch["env_ind"].shape == torch.Size([2])
+        assert data_batch["env_ind"].shape == torch.Size([3])
 
         return data_batch
 
@@ -220,6 +189,7 @@ def load_data(
     batch_size=8,
     train_split=0.8,
     add_task_ind=False,
+    few_shot=None,
 ):
     """
     Method to return a Dataloader of manipulator demonstrations
@@ -229,7 +199,7 @@ def load_data(
         Location where the demonstrations are saved
     task_filter_keys: re.compile object
         Regex to extract specific tasks from the recorded demonstrations-
-        use ReverseTrajDataset.task_filter_map
+        use task_filter_map
     required_data_keys: default=["front_rgb", "left_shoulder_rgb", "right_shoulder_rgb",
         "wrist_rgb", "joint_positions", "gripper_open"]
         Features to extract for an episode
@@ -262,10 +232,50 @@ def load_data(
     train_loader, val_loader
     """
 
+    task_filter_map = {
+        # Box
+        "box_open": re.compile(r"forward_[\d]*1.pickle"),
+        "box_close": re.compile(r"backward_[\d]*1.pickle"),
+        "box": re.compile(r"[a-zA-Z_]*[\d]*1.pickle"),
+        # Door
+        "door_open": re.compile(r"forward_[\d]*2.pickle"),
+        "door_close": re.compile(r"backward_[\d]*2.pickle"),
+        "door": re.compile(r"[a-zA-Z_]*[\d]*2.pickle"),
+        # Toilet
+        "toilet_seat_up": re.compile(r"forward_[\d]*3.pickle"),
+        "toilet_seat_down": re.compile(r"backward_[\d]*3.pickle"),
+        "toilet_seat": re.compile(r"[a-zA-Z_]*[\d]*3.pickle"),
+        # Grill
+        "grill_open": re.compile(r"forward_[\d]*5.pickle"),
+        "grill_close": re.compile(r"backward_[\d]*5.pickle"),
+        "grill": re.compile(r"[a-zA-Z_]*[\d]*5.pickle"),
+    }
+    # Few-shot training
+    if few_shot:
+        task_filter_map["bo_bc_tc"] = re.compile(r"demo_forward_[\d]*[3].pickle")
+        task_filter_map["bo_bc_go_gc_tc"] = re.compile(r"demo_forward_[\d]*[3].pickle")
+        task_filter_map["go_gc_to_tc_bc"] = re.compile(r"demo_forward_[\d]*[1].pickle")
+        task_filter_map["go_gc_to_tc_bo"] = re.compile(r"demo_backward_[\d]*[1].pickle")
+
+    # Multi-task training
+    else:
+        task_filter_map["bo_bc_tc"] = re.compile(
+            r"[a-zA-Z_]*[\d]*[1].pickle|demo_backward_[\d]*[3].pickle"
+        )
+        task_filter_map["bo_bc_go_gc_tc"] = re.compile(
+            r"[a-zA-Z_]*[\d]*[1].pickle|[a-zA-Z_]*[\d]*[5].pickle|demo_backward_[\d]*[3].pickle"
+        )
+        task_filter_map["go_gc_to_tc_bc"] = re.compile(
+            r"[a-zA-Z_]*[\d]*[5].pickle|[a-zA-Z_]*[\d]*[3].pickle|demo_backward_[\d]*[1].pickle"
+        )
+        task_filter_map["go_gc_to_tc_bo"] = re.compile(
+            r"[a-zA-Z_]*[\d]*[5].pickle|[a-zA-Z_]*[\d]*[3].pickle|demo_forward_[\d]*[1].pickle"
+        )
+
     file_list = []
     if "sim_" in task_name:
         task_name = task_name.replace("sim_", "")
-    task_filter_key = ReverseTrajDataset.task_filter_map[task_name]
+    task_filter_key = task_filter_map[task_name]
     for file in glob.glob(os.path.join(dataset_dir, "*.pickle")):
         if task_filter_key is None:
             file_list.append(file)
@@ -273,12 +283,16 @@ def load_data(
             if task_filter_key.search(file):
                 file_list.append(file)
     random.shuffle(file_list)
-    # TODO: Split based on task
-    # file_list = file_list[:13]  # For few-shot
-    split_idx = int(len(file_list) * train_split)
-    # print("Sampling train dataset from a beta distribution: 1.5, 1.5")
+    if few_shot:  # For few-shot
+        train_file_list = file_list[:few_shot]
+        test_file_list = file_list[few_shot : few_shot + 10]
+    else:
+        split_idx = int(len(file_list) * train_split)
+        train_file_list = file_list[:split_idx]
+        test_file_list = file_list[split_idx:]
+
     train_dataset = ReverseTrajDataset(
-        file_list=file_list[:split_idx],
+        file_list=train_file_list,
         required_data_keys=required_data_keys,
         chunk_size=chunk_size,
         norm_bound=norm_bound,
@@ -287,7 +301,7 @@ def load_data(
         # sampler=partial(np.random.beta, 1.5, 1.5),
     )
     val_dataset = ReverseTrajDataset(
-        file_list=file_list[split_idx:],
+        file_list=test_file_list,
         required_data_keys=required_data_keys,
         chunk_size=chunk_size,
         norm_bound=norm_bound,

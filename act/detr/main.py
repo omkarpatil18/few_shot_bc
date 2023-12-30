@@ -127,6 +127,8 @@ def get_args_parser():
     parser.add_argument("--temporal_agg", action="store_true")
     parser.add_argument("--add_task_ind", action="store_true")
     parser.add_argument("--ckpt_names", action="store", nargs="*", help="ckpt_names")
+    parser.add_argument("--few_shot", action="store", type=int, help="few_shot")
+    parser.add_argument("--ent_weight", action="store", type=float, help="ent_weight")
 
     return parser
 
