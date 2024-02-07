@@ -45,7 +45,6 @@ python3  imitate_episodes.py --task_name sim_door_close --ckpt_dir /home/local/A
 **task name: sim_box_close/sim_box_open**   
 python3  imitate_episodes.py --task_name sim_box_close --ckpt_dir /home/local/ASUAD/<add_location>/act_box_close_100 --policy_class ACT --kl_weight 10 --chunk_size 100 --hidden_dim 512 --batch_size 128 --dim_feedforward 3200 --num_epochs 2000  --lr 1e-5 --seed 0
 
-- To add language conditioning, add ```--add_task_ind``` to the arguments for both training and eval
 - To evaluate the policy, run the same command but add ``--eval``. This loads the best validation checkpoint.
 - To specify the the model checkpoints for rollout, use ```--ckpt_names``` in the argument followed by the checkpoint names
 - To enable temporal ensembling, add flag ``--temporal_agg``.
